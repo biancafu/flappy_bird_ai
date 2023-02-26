@@ -89,7 +89,39 @@ class Bird:
     #collision 
     def get_mask(self): 
         return pygame.mask.from_surface(self.img)
-        
+
+class Pipe:
+    GAP = 200 #gap between pipes
+    VEL = 5 #how fast pipe will move
+
+    def __init__(self, x):
+        self.x = x
+        self.height = 0
+        self.gap = 100
+
+        self.top = 0
+        self.bottom = 0
+        self.PIPE_TOP = pygame.transform.flip(PIPE_IMG, False, True) #flip the pipe as pipe on the top
+        self.PIPE_BOTTOM = PIPE_IMG 
+
+        self.passed = False  #collision purpose and ai
+        self.set_height() 
+
+    #define top and bottom of height and how tall it is in random
+    def set_height(self):
+        self.height = random.randrange(50, 450)
+        self.top = self.height - self.PIPE_TOP.get_height() #top left of pipe needs to be calculated
+        self.bottom = self.height + self.GAP
+    
+    def move(self):
+        self.x -= self.VEL
+    
+    def draw(self, win):
+        win.blit(self.PIPE_TOP, (self.x, self.top))
+        win.blit(self.PIPE_BOTTOM, (self.x, self.bottom))
+
+    #8:30 min
+
 def draw_window(win, bird):
     win.blit(BG_IMG, (0,0)) #position 0,0 (top left)
     bird.draw(win)
