@@ -3,6 +3,7 @@ import neat
 import time
 import os
 import random
+pygame.font.init()
 
 # dimension of screen, constants
 WIN_WIDTH = 500
@@ -17,6 +18,8 @@ BIRD_IMGS = [
 PIPE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "pipe.png")))
 BASE_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "base.png")))
 BG_IMG = pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bg.png")))
+
+STAT_FONT = pygame.font.SysFont("comicsans", 35) #score font
 
 
 class Bird:
@@ -126,21 +129,67 @@ class Pipe:
         bottom_mask = pygame.mask.from_surface(self.PIPE_BOTTOM)
 
         #offset => how far away the mask are from each other, look up mask in pygame for further info
-        top_offset = (self.x - bird.x, self.top - round(bird.y)) #offset from bird to top mask (2 top left corner)
+        top_offset = (self.x - bird.x, self.top - round(bird.y)) 
         bottom_offset = (self.x - bird.x, self.bottom - round(bird.y))
+        #offset from bird to top mask (2 top left corner) and use mask (list of pixels) and see if they overlap
+
+        b_point = bird_mask.overlap(bottom_mask, bottom_offset) #point of overlap between bird mask and bottom pipe (bottom offset), if not collide return None
+        t_point = bird_mask.overlap(top_mask, top_offset)
+
+        if t_point or b_point: #if its not none => collided (bird passed in collided with this pipe or not)
+            return True
+        return False
+    
+
+class Base:
+    VEL = 5 #same as pipe
+    WIDTH = BASE_IMG.get_width()
+    IMG = BASE_IMG
+
+    def __init__(self, y): #don't need x cuz it will be moving to left
+        self.y =y
+        self.x1 = 0 #img1 at 0
+        self.x2 = self.WIDTH #img2 right behind img1
+    
+    def move(self):
+        #both img moving at same speed
+        self.x1 -= self.VEL
+        self.x2 -= self.VEL
+
+        #if img1/img2 is off screen, move it back to cycle it again, forming infinite loop
+        if self.x1 + self.WIDTH < 0:
+            self.x1 = self.x2 + self.WIDTH
+        if self.x2 + self.WIDTH < 0:
+            self.x2 = self.x1 + self.WIDTH
+
+    def draw(self, win):
+        win.blit(self.IMG, (self.x1, self.y))
+        win.blit(self.IMG, (self.x2, self.y))
 
 
-def draw_window(win, bird):
+
+def draw_window(win, bird, pipes, base, score):
     win.blit(BG_IMG, (0,0)) #position 0,0 (top left)
+    for pipe in pipes:  #can have multiple pipes (list of pipes) in screen
+        pipe.draw(win)
+    
+    #creating score
+    text = STAT_FONT.render("Score: " + str(score), 1,(255,255,255))
+    win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10)) #no matter how long the score is, will keep moving left to the screen
+    base.draw(win)
     bird.draw(win)
     pygame.display.update()
 
 
 #main loop of game
 def main():
-    bird = Bird(200, 200)
+    bird = Bird(230, 350)
+    base = Base(730) #730 is bottom of screen
+    pipes = [Pipe(600)]
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
     clock = pygame.time.Clock()
+
+    score = 0
 
     run = True
     while run:
@@ -148,8 +197,39 @@ def main():
         for event in pygame.event.get(): #listening for user event
             if event.type == pygame.QUIT:
                 run= False
-        bird.move()
-        draw_window(win, bird)
+
+        #bird.move()
+        add_pipe = False
+        rem = [] #removing pipes list
+        for pipe in pipes:
+            #collision test
+            if pipe.collide(bird): 
+                pass
+
+            #check if pipe is off the screen
+            if pipe.x + pipe.PIPE_TOP.get_width() < 0:
+                rem.append(pipe)
+            
+            #when bird passes pipe, we set passed = True (defined in bird class), and we need to add another pipe
+            if not pipe.passed and pipe.x < bird.x:
+                pipe.passed = True
+                add_pipe = True
+
+            pipe.move()
+        if add_pipe:
+            score += 1
+            pipes.append(Pipe(600))
+
+        #removing pipes off screen
+        for r in rem:
+            pipes.remove(r)
+
+        #dying condition (when it hits floor)
+        if bird.y + bird.img.get_height() >= 730: #730 is the floor/base
+            pass
+
+        base.move()
+        draw_window(win, bird, pipes, base, score)
     pygame.quit()
     quit()
 
