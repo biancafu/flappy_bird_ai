@@ -86,7 +86,7 @@ class Bird:
         new_rect = rotated_image.get_rect(center = self.img.get_rect(topleft = (self.x, self.y)).center) #rotate image around center
         win.blit(rotated_image, new_rect.topleft) #rotating image
     
-    #collision 
+    #collision detection with 2D list
     def get_mask(self): 
         return pygame.mask.from_surface(self.img)
 
@@ -120,7 +120,15 @@ class Pipe:
         win.blit(self.PIPE_TOP, (self.x, self.top))
         win.blit(self.PIPE_BOTTOM, (self.x, self.bottom))
 
-    #8:30 min
+    def collide(self, bird):
+        bird_mask = bird.get_mask()
+        top_mask = pygame.mask.from_surface(self.PIPE_TOP)
+        bottom_mask = pygame.mask.from_surface(self.PIPE_BOTTOM)
+
+        #offset => how far away the mask are from each other, look up mask in pygame for further info
+        top_offset = (self.x - bird.x, self.top - round(bird.y)) #offset from bird to top mask (2 top left corner)
+        bottom_offset = (self.x - bird.x, self.bottom - round(bird.y))
+
 
 def draw_window(win, bird):
     win.blit(BG_IMG, (0,0)) #position 0,0 (top left)
