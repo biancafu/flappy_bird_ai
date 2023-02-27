@@ -126,8 +126,43 @@ class Pipe:
         bottom_mask = pygame.mask.from_surface(self.PIPE_BOTTOM)
 
         #offset => how far away the mask are from each other, look up mask in pygame for further info
-        top_offset = (self.x - bird.x, self.top - round(bird.y)) #offset from bird to top mask (2 top left corner)
+        top_offset = (self.x - bird.x, self.top - round(bird.y)) 
         bottom_offset = (self.x - bird.x, self.bottom - round(bird.y))
+        #offset from bird to top mask (2 top left corner) and use mask (list of pixels) and see if they overlap
+
+        b_point = bird_mask.overlap(bottom_mask, bottom_offset) #point of overlap between bird mask and bottom pipe (bottom offset), if not collide return None
+        t_point = bird_mask.overlap(top_mask, top_offset)
+
+        if t_point or b_point: #if its not none => collided (bird passed in collided with this pipe or not)
+            return True
+        return False
+    
+
+class Base:
+    VEL = 5 #same as pipe
+    WIDTH = BASE_IMG.get_width()
+    IMG = BASE_IMG
+
+    def __init__(self, y): #don't need x cuz it will be moving to left
+        self.y =y
+        self.x1 = 0 #img1 at 0
+        self.x2 = self.WIDTH #img2 right behind img1
+    
+    def move(self):
+        #both img moving at same speed
+        self.x1 -= self.VEL
+        self.x2 -= self.VEL
+
+        #if img1/img2 is off screen, move it back to cycle it again, forming infinite loop
+        if self.x1 + self.WIDTH < 0:
+            self.x1 = self.x2 + self.WIDTH
+        if self.x2 + self.WIDTH < 0:
+            self.x2 = self.x1 + self.WIDTH
+
+    def draw(self, win):
+        win.blit(self.IMG, (self.x1, self.y))
+        win.blit(self.IMG, (self.x2, self.y))
+
 
 
 def draw_window(win, bird):
