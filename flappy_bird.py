@@ -222,11 +222,15 @@ def main(genomes, config):
         add_pipe = False
         rem = [] #removing pipes list
         for pipe in pipes:
-            for bird in birds: #added for loop for multiple birds (ai)
+            for x, bird in enumerate(birds): #added for loop for multiple birds (ai)
             #collision test
-                if pipe.collide(bird): 
-                    pass
-            
+                if pipe.collide(bird): #if collide, we don't wanna keep genome in list anymore, fitness needs to stop as well
+                    ge[x].fitness -= 1 #want to make bird who hits the pipe to have less fitness to encourage bird not to hit the pipe (hiehgt fitness for birds who don't hit pipe)
+                    #remove this bird(genome) from list
+                    birds.pop(x) 
+                    nets.pop(x)
+                    ge.pop(x)
+
                 #when bird passes pipe, we set passed = True (defined in bird class), and we need to add another pipe
                 if not pipe.passed and pipe.x < bird.x:
                     pipe.passed = True
@@ -240,16 +244,22 @@ def main(genomes, config):
 
         if add_pipe:
             score += 1
+            #if go through the pipe, fitness adds 5 to encourage bird to go through pipe not just running into them
+            for g in ge:
+                #remaining genome in the ge list are the ones that are still alive (removed collided ones earlier)
+                g.fitness += 5
             pipes.append(Pipe(600))
 
         #removing pipes off screen
         for r in rem:
             pipes.remove(r)
 
-        for bird in birds: #added for loop for multiple birds (ai)
-            #dying condition (when it hits floor)
+        for x, bird in enumerate(birds): #added for loop for multiple birds (ai)
+            #dying condition (clear bird from the list when it hits when it hits floor)
             if bird.y + bird.img.get_height() >= 730: #730 is the floor/base
-                pass
+                birds.pop(x) 
+                nets.pop(x)
+                ge.pop(x)
 
         base.move()
         draw_window(win, bird, pipes, base, score)
