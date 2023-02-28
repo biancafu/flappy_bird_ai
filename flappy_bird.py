@@ -232,13 +232,15 @@ def main():
         draw_window(win, bird, pipes, base, score)
     pygame.quit()
     quit()
-
 main()
 
-def run(config_path):
-    #defining the sub-headings in config file
+
+#load in config file
+def run(config_path): 
+    #defining all the sub-headings in config file
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, 
                                 neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
+    #population
     p = neat.Population(config) #population depending on what we have in the config file
 
     #give us detail stats of generation, best finess... in console
@@ -251,6 +253,9 @@ def run(config_path):
 
 
 if __name__ == "__main__":
-    local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, "config-feedforward.txt")
+    #getting path of configuration file in the way neat recommends
+    local_dir = os.path.dirname(__file__) #give us path to directory we are currently in, to load in the config file
+    config_path = os.path.join(local_dir, "config-feedforward.txt") #finding the absolute path to config file (by joining the local directory to the name of config file)
     run(config_path)
+
+    
