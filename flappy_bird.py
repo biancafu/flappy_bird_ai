@@ -182,8 +182,28 @@ def draw_window(win, bird, pipes, base, score):
 
 
 #main loop of game
-def main():
-    bird = Bird(230, 350)
+#this is our fitness function, we need  to take all birds (genomes) and evaluate them
+def main(genomes, config): 
+    #keep track of neural network that controls the bird to change fitness accordingly after
+    nets = []
+    ge = [] 
+    birds = [] #change to list for multiple birds (ai)
+
+    for g in genomes:
+        #the genome will have same position in the list for neural network, birds, and genome
+
+        #set up neural network for the genome
+        net = neat.nn.FeedForwardNetwork(g, config)
+        #save this neural network
+        nets.append(net)
+        #create a bird for the genome and save it
+        birds.append(Bird(230, 350))
+        #default fitness = 0
+        g.fitness = 0
+        #save genome in ge list
+        ge.append(g)
+
+
     base = Base(730) #730 is bottom of screen
     pipes = [Pipe(600)]
     win = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
@@ -202,20 +222,22 @@ def main():
         add_pipe = False
         rem = [] #removing pipes list
         for pipe in pipes:
+            for bird in birds: #added for loop for multiple birds (ai)
             #collision test
-            if pipe.collide(bird): 
-                pass
-
+                if pipe.collide(bird): 
+                    pass
+            
+                #when bird passes pipe, we set passed = True (defined in bird class), and we need to add another pipe
+                if not pipe.passed and pipe.x < bird.x:
+                    pipe.passed = True
+                    add_pipe = True
+            
             #check if pipe is off the screen
             if pipe.x + pipe.PIPE_TOP.get_width() < 0:
                 rem.append(pipe)
-            
-            #when bird passes pipe, we set passed = True (defined in bird class), and we need to add another pipe
-            if not pipe.passed and pipe.x < bird.x:
-                pipe.passed = True
-                add_pipe = True
 
             pipe.move()
+
         if add_pipe:
             score += 1
             pipes.append(Pipe(600))
@@ -224,9 +246,10 @@ def main():
         for r in rem:
             pipes.remove(r)
 
-        #dying condition (when it hits floor)
-        if bird.y + bird.img.get_height() >= 730: #730 is the floor/base
-            pass
+        for bird in birds: #added for loop for multiple birds (ai)
+            #dying condition (when it hits floor)
+            if bird.y + bird.img.get_height() >= 730: #730 is the floor/base
+                pass
 
         base.move()
         draw_window(win, bird, pipes, base, score)
@@ -249,7 +272,7 @@ def run(config_path):
     p.add_reporter(stats)
 
     #setting fitness function
-    winner = p.run(main,50)
+    winner = p.run(main, 50) #run fitness function (main here) 50 times/generations
 
 
 if __name__ == "__main__":
