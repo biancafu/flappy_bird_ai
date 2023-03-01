@@ -170,7 +170,7 @@ class Base:
 
 
 
-def draw_window(win, birds, pipes, base, score, gen):
+def draw_window(win, birds, pipes, base, score, gen, alive):
     win.blit(BG_IMG, (0,0)) #position 0,0 (top left)
     for pipe in pipes:  #can have multiple pipes (list of pipes) in screen
         pipe.draw(win)
@@ -179,9 +179,12 @@ def draw_window(win, birds, pipes, base, score, gen):
     text = STAT_FONT.render("Score: " + str(score), 1,(255,255,255))
     win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10)) #no matter how long the score is, will keep moving left to the screen
     
-    #creating generation score
+    #creating generation score & # of alive birds
     text = STAT_FONT.render("Gen: " + str(gen), 1,(255,255,255))
     win.blit(text, (10, 10))
+
+    text = STAT_FONT.render("Alive: " + str(alive), 1,(255,255,255))
+    win.blit(text, (10, 50))
     
     base.draw(win)
     #to draw all the birds
@@ -226,7 +229,7 @@ def main(genomes, config):
     run = True
     while run:
         #run 30 times every seconds
-        clock.tick(30) #change this number to make it run faster
+        clock.tick(60) #change this number to make it run faster
         for event in pygame.event.get(): #listening for user event
             if event.type == pygame.QUIT:
                 run= False
@@ -305,7 +308,8 @@ def main(genomes, config):
         #     break
 
         base.move()
-        draw_window(win, birds, pipes, base, score, GEN)
+        alive = len(birds)
+        draw_window(win, birds, pipes, base, score, GEN, alive)
 
 #load in config file
 def run(config_path): 
