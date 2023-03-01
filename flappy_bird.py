@@ -9,6 +9,8 @@ pygame.font.init()
 WIN_WIDTH = 500
 WIN_HEIGHT = 800
 
+GEN = 0 #generation
+
 # load imaages, make them 2x size
 BIRD_IMGS = [
     pygame.transform.scale2x(pygame.image.load(os.path.join("imgs", "bird1.png"))),
@@ -168,7 +170,7 @@ class Base:
 
 
 
-def draw_window(win, birds, pipes, base, score):
+def draw_window(win, birds, pipes, base, score, gen):
     win.blit(BG_IMG, (0,0)) #position 0,0 (top left)
     for pipe in pipes:  #can have multiple pipes (list of pipes) in screen
         pipe.draw(win)
@@ -176,6 +178,11 @@ def draw_window(win, birds, pipes, base, score):
     #creating score
     text = STAT_FONT.render("Score: " + str(score), 1,(255,255,255))
     win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10)) #no matter how long the score is, will keep moving left to the screen
+    
+    #creating generation score
+    text = STAT_FONT.render("Gen: " + str(gen), 1,(255,255,255))
+    win.blit(text, (10, 10))
+    
     base.draw(win)
     #to draw all the birds
     for bird in birds:
@@ -187,6 +194,8 @@ def draw_window(win, birds, pipes, base, score):
 #main loop of game
 #this is our fitness function, we need  to take all birds (genomes) and evaluate them
 def main(genomes, config): 
+    global GEN
+    GEN += 1 #every time we run the main loop, our generation increases
     #keep track of neural network that controls the bird to change fitness accordingly after
     nets = []
     ge = [] 
@@ -216,7 +225,8 @@ def main(genomes, config):
 
     run = True
     while run:
-        clock.tick(30) #run 30 times every seconds
+        #run 30 times every seconds
+        clock.tick(30) #change this number to make it run faster
         for event in pygame.event.get(): #listening for user event
             if event.type == pygame.QUIT:
                 run= False
@@ -289,11 +299,17 @@ def main(genomes, config):
                 nets.pop(x)
                 ge.pop(x)
 
+        # threshold score to break out of loop when return to winner, pickle and save and use this neural network
+        # to draw only 1 bird on screen instead of 100 and have it run through play the game
+        # if score > 50:
+        #     break
+
         base.move()
-        draw_window(win, birds, pipes, base, score)
+        draw_window(win, birds, pipes, base, score, GEN)
 
 #load in config file
 def run(config_path): 
+    import pickle # to implement best fitness of generation
     #defining all the sub-headings in config file
     config = neat.config.Config(neat.DefaultGenome, neat.DefaultReproduction, 
                                 neat.DefaultSpeciesSet, neat.DefaultStagnation, config_path)
@@ -306,6 +322,8 @@ def run(config_path):
     p.add_reporter(stats)
 
     #setting fitness function
+    # save winner object for best fitness of generation (user pickle to save as file)
+    # load that file in and use that neural network from that genome to move bird up and down after
     winner = p.run(main, 50) #run fitness function (main here) 50 times/generations
 
 
