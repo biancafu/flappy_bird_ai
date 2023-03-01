@@ -168,7 +168,7 @@ class Base:
 
 
 
-def draw_window(win, bird, pipes, base, score):
+def draw_window(win, birds, pipes, base, score):
     win.blit(BG_IMG, (0,0)) #position 0,0 (top left)
     for pipe in pipes:  #can have multiple pipes (list of pipes) in screen
         pipe.draw(win)
@@ -177,7 +177,10 @@ def draw_window(win, bird, pipes, base, score):
     text = STAT_FONT.render("Score: " + str(score), 1,(255,255,255))
     win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10)) #no matter how long the score is, will keep moving left to the screen
     base.draw(win)
-    bird.draw(win)
+    #to draw all the birds
+    for bird in birds:
+        bird.draw(win)
+
     pygame.display.update()
 
 
@@ -189,11 +192,11 @@ def main(genomes, config):
     ge = [] 
     birds = [] #change to list for multiple birds (ai)
 
-    for g in genomes:
+    for _, g in genomes: #we need to do this because genome is actually a tuple with (id, genome object)
         #the genome will have same position in the list for neural network, birds, and genome
 
         #set up neural network for the genome
-        net = neat.nn.FeedForwardNetwork(g, config)
+        net = neat.nn.FeedForwardNetwork.create(g, config)
         #save this neural network
         nets.append(net)
         #create a bird for the genome and save it
@@ -213,12 +216,37 @@ def main(genomes, config):
 
     run = True
     while run:
-        clock.tick(30) #at most 30 ticks every seconds
+        clock.tick(30) #run 30 times every seconds
         for event in pygame.event.get(): #listening for user event
             if event.type == pygame.QUIT:
                 run= False
+                pygame.quit()
+                quit()
 
-        #bird.move()
+        #need to know which pipe we are looking at if there are more than 1 in the screen
+        #for giving the information to the genome as input 
+
+        pipe_ind = 0 #pipe index
+        if len(birds) > 0:
+            #if we have more than 1 pipe && x position of bird (all have the same) is past the first pipe then we set pipe index to the next one
+            if len(pipes) > 1 and birds[0].x > pipes[0].x + pipes[0].PIPE_TOP.get_width():
+                pipe_ind = 1
+        
+        else: #if no birds left, quit the game
+            run = False
+            break
+
+        for x, bird in enumerate(birds):
+            bird.move()
+            #very small number becuz this for loop runs 30 times a second
+            ge[x].fitness += 0.1 #encourages the bird to stay alive and not fly to the top or bottom of screen
+
+            #activate neural network with inputs
+            output = nets[x].activate((bird.y, abs(bird.y - pipes[pipe_ind].height), abs(bird.y - pipes[pipe_ind].bottom))) #output of neural network
+            if output[0] > 0.5: #0.5 according to our logic
+                #output[0] becuase output is a list of all output neurons, but in this case we only have 1 output neuron
+                bird.jump()
+
         add_pipe = False
         rem = [] #removing pipes list
         for pipe in pipes:
@@ -255,18 +283,14 @@ def main(genomes, config):
             pipes.remove(r)
 
         for x, bird in enumerate(birds): #added for loop for multiple birds (ai)
-            #dying condition (clear bird from the list when it hits when it hits floor)
-            if bird.y + bird.img.get_height() >= 730: #730 is the floor/base
+            #dying condition (clear bird from the list when it hits when it hits floor or goes above screen)
+            if bird.y + bird.img.get_height() >= 730 or bird.y < 0: #730 is the floor/base, 0 is top of screen
                 birds.pop(x) 
                 nets.pop(x)
                 ge.pop(x)
 
         base.move()
-        draw_window(win, bird, pipes, base, score)
-    pygame.quit()
-    quit()
-main()
-
+        draw_window(win, birds, pipes, base, score)
 
 #load in config file
 def run(config_path): 
