@@ -5,7 +5,7 @@ fitness_criterion     = max   #we are taking the best ones (max ones) from the b
 #what number we want to reach, then we stop running program
 fitness_threshold     = 100
 #population size
-pop_size              = 100
+pop_size              = 100 #if too high, for this game, there aren't that many possibilities to try so it may succeed in first gen
 #check deocumentation, if false => and all species become extinct =>  throws an error
 reset_on_extinction   = False
 
